@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HG Costco Lead Workflow — Master Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --bg:        hsl(160 10% 4%);
+    --bg2:       hsl(160 8% 7%);
+    --card:      hsl(160 8% 9%);
+    --border:    hsl(160 6% 16%);
+    --fg:        hsl(120 10% 92%);
+    --muted:     hsl(160 5% 50%);
+
+    /* Actor colours */
+    --centah:    hsl(270 55% 62%);   /* purple  — CENTAH/Costco */
+    --auto:      hsl(100 60% 44%);   /* green   — Automation    */
+    --hg:        hsl(40  85% 55%);   /* gold    — HG Team       */
+    --member:    hsl(205 70% 55%);   /* blue    — Member        */
+
+    --centah-bg: hsl(270 55% 62% / 0.08);
+    --auto-bg:   hsl(100 60% 44% / 0.08);
+    --hg-bg:     hsl(40  85% 55% / 0.08);
+    --member-bg: hsl(205 70% 55% / 0.08);
+
+    /* Status */
+    --live:      hsl(100 60% 44%);
+    --notbuilt:  hsl(38  90% 55%);
+    --blocked:   hsl(0   75% 58%);
+
+    /* Outcomes */
+    --won:       hsl(100 60% 44%);
+    --lost:      hsl(0   75% 55%);
+
+    --radius: 0.625rem;
+    --col-w: 220px;
+    --gap: 1.5rem;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, .label { font-family: 'Space Grotesk', sans-serif; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2.5rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .page-header h1 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+  .page-header p { font-size: 0.8125rem; color: var(--muted); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem 2rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .legend-group { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .legend-sep {
+    width: 1px;
+    background: var(--border);
+    height: 1rem;
+    align-self: center;
+  }
+
+  /* ── SWIMLANE GRID ── */
+  .swim-wrap {
+    overflow-x: auto;
+    padding: 2rem 2rem 4rem;
+  }
+  .swim-grid {
+    display: grid;
+    grid-template-columns: var(--col-w) var(--col-w) var(--col-w) var(--col-w);
+    gap: 0;
+    min-width: calc(var(--col-w) * 4 + 3px);
+    position: relative;
+  }
+
+  /* Lane headers */
+  .lane-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border-bottom: 2px solid;
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .lane-header:last-child { border-right: none; }
+  .lane-header.centah { color: var(--centah); border-color: var(--centah); }
+  .lane-header.auto   { color: var(--auto);   border-color: var(--auto); }
+  .lane-header.hg     { color: var(--hg);     border-color: var(--hg); }
+  .lane-header.member { color: var(--member);  border-color: var(--member); }
+
+  /* Lane columns */
+  .lane-col {
+    border-right: 1px solid var(--border);
+    min-height: 100%;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .lane-col:last-child { border-right: none; }
+  .lane-col.centah { background: hsl(270 20% 6%); }
+  .lane-col.auto   { background: hsl(100 20% 5%); }
+  .lane-col.hg     { background: hsl(40  20% 5%); }
+  .lane-col.member { background: hsl(205 20% 5%); }
+
+  /* ── PHASE ROW ── */
+  .phase-row {
+    grid-column: 1 / -1;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .phase-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+  }
+  .phase-status {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+  }
+  .phase-status.live     { background: hsl(100 60% 44% / 0.15); color: var(--live); border: 1px solid hsl(100 60% 44% / 0.3); }
+  .phase-status.notbuilt { background: hsl(38  90% 55% / 0.12); color: var(--notbuilt); border: 1px solid hsl(38 90% 55% / 0.3); }
+
+  /* ── NODE ── */
+  .node {
+    width: 100%;
+    max-width: 196px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 0.625rem 0.75rem;
+    position: relative;
+    text-align: left;
+    transition: border-color 0.15s;
+    margin-bottom: 0;
+  }
+  .node:hover { border-color: hsl(160 6% 30%); }
+  .node.centah { border-left: 3px solid var(--centah); background: var(--centah-bg); }
+  .node.auto   { border-left: 3px solid var(--auto);   background: var(--auto-bg); }
+  .node.hg     { border-left: 3px solid var(--hg);     background: var(--hg-bg); }
+  .node.member { border-left: 3px solid var(--member);  background: var(--member-bg); }
+  .node.notbuilt { opacity: 0.7; }
+  .node.notbuilt::after {
+    content: 'NOT BUILT';
+    position: absolute;
+    top: 0.375rem; right: 0.5rem;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--notbuilt);
+  }
+
+  .node-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--fg);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+    padding-right: 0.5rem;
+  }
+  .node-body {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  .node-body strong { color: hsl(120 10% 82%); font-weight: 500; }
+  .node-body .pill {
+    display: inline-block;
+    background: hsl(160 6% 14%);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.6875rem;
+    margin: 0.125rem 0.1rem 0 0;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  /* ── CONNECTOR ── */
+  .connector {
+    width: 2px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin: 0 auto;
+  }
+  .connector.centah { background: hsl(270 55% 62% / 0.25); }
+  .connector.auto   { background: hsl(100 60% 44% / 0.25); }
+  .connector.hg     { background: hsl(40  85% 55% / 0.25); }
+  .connector.member { background: hsl(205 70% 55% / 0.25); }
+
+  .arrow-down {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 7px solid var(--border);
+    margin: 0 auto;
+    flex-shrink: 0;
+  }
+  .arrow-down.centah { border-top-color: hsl(270 55% 62% / 0.4); }
+  .arrow-down.auto   { border-top-color: hsl(100 60% 44% / 0.4); }
+  .arrow-down.hg     { border-top-color: hsl(40  85% 55% / 0.4); }
+  .arrow-down.member { border-top-color: hsl(205 70% 55% / 0.4); }
+
+  /* Spacer inside a lane column (empty rows) */
+  .lane-spacer { flex: 1; }
+
+  /* ── DECISION ── */
+  .decision-wrap {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0.5rem 1rem 0;
+    gap: 0;
+    position: relative;
+  }
+  .decision-box {
+    position: relative;
+    width: 160px;
+    flex-shrink: 0;
+  }
+  .diamond {
+    width: 140px;
+    height: 56px;
+    background: hsl(160 8% 11%);
+    border: 1.5px solid var(--border);
+    transform: rotate(45deg);
+    margin: 16px auto;
+    transition: border-color 0.15s;
+    border-radius: 4px;
+  }
+  .diamond-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--fg);
+    padding: 0 1.5rem;
+    line-height: 1.3;
+  }
+
+  /* YES / NO labels on branches */
+  .branch-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0 0.5rem;
+    color: var(--muted);
+    align-self: center;
+    flex-shrink: 0;
+  }
+  .branch-label.yes { color: var(--auto); }
+  .branch-label.no  { color: var(--lost); }
+
+  /* ── TERMINAL NODES ── */
+  .terminal {
+    border-radius: var(--radius);
+    padding: 0.875rem 1.25rem;
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
+  }
+  .terminal.won {
+    background: hsl(100 60% 44% / 0.12);
+    border: 1.5px solid hsl(100 60% 44% / 0.4);
+    color: var(--won);
+  }
+  .terminal.lost {
+    background: hsl(0 75% 55% / 0.1);
+    border: 1.5px solid hsl(0 75% 55% / 0.3);
+    color: var(--lost);
+  }
+  .terminal p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+
+  /* ── FULL-WIDTH SECTION ── */
+  /* Used for decisions + branches that span all lanes */
+  .full-row {
+    grid-column: 1 / -1;
+    padding: 0 0.75rem;
+  }
+
+  /* ── PARALLEL NODES ── (two nodes side by side inside a single lane cell) */
+  .parallel-pair {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  /* ── INLINE CONNECTOR AREA ── */
+  .conn-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .conn-h { /* horizontal line segment */
+    height: 2px;
+    background: var(--border);
+    flex: 1;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── OUTCOME ROW ── */
+  .outcome-row {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1.5rem 1rem 0.5rem;
+  }
+  .outcome-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    max-width: 300px;
+  }
+
+  /* ── FOLLOW-UP TRACK (no-sale cadence) ── */
+  .cadence {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    width: 100%;
+    max-width: 196px;
+  }
+  .cadence-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    border-radius: 0.375rem;
+    background: hsl(160 8% 10%);
+    border: 1px solid var(--border);
+    padding: 0.375rem 0.5rem;
+  }
+  .cadence-time {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--notbuilt);
+    white-space: nowrap;
+    min-width: 2.5rem;
+    padding-top: 0.0625rem;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .cadence-desc {
+    font-size: 0.6875rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: hsl(160 6% 20%); border-radius: 3px; }
+
+  /* print hint */
+  .print-note {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 0.6875rem;
+    color: hsl(160 5% 30%);
+    padding: 2rem 0 0;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── PAGE HEADER ── -->
+<div class="page-header">
+  <h1>Heavenly Greens · Costco Lead Workflow — Master Flow</h1>
+  <p>From CENTAH notification → appointment → sale/no-sale → installation → certificate submission</p>
+  <div class="legend">
+    <div class="legend-group">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--centah)"></span>CENTAH / Costco</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--auto)"></span>Automation (AGM · SF · Modal)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--hg)"></span>HG Team (human)</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--member)"></span>Member (customer)</span>
+    </div>
+    <span class="legend-sep"></span>
+    <div class="legend-group">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--live)"></span>Live</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--notbuilt);border-radius:0"></span>Not Yet Built</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--won)"></span>Project Won</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--lost)"></span>Project Lost</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── SWIMLANE ── -->
+<div class="swim-wrap">
+<div class="swim-grid">
+
+  <!-- LANE HEADERS -->
+  <div class="lane-header centah">CENTAH / Costco</div>
+  <div class="lane-header auto">Automation</div>
+  <div class="lane-header hg">HG Team</div>
+  <div class="lane-header member">Member</div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 1 — LEAD ORIGIN
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 1 · Lead Origin</span>
+    <span class="phase-status live">Live</span>
+  </div>
+
+  <!-- Row 1 -->
+  <div class="lane-col centah">
+    <div class="node centah">
+      <div class="node-title">Member submits turf request</div>
+      <div class="node-body">Costco member requests an artificial turf consultation via Costco.com or in-store kiosk.</div>
+    </div>
+    <div class="connector centah" style="height:1rem"></div>
+    <div class="arrow-down centah"></div>
+    <div class="connector centah" style="height:0.5rem"></div>
+    <div class="node centah">
+      <div class="node-title">CENTAH receives &amp; routes</div>
+      <div class="node-body">Lead assigned to Heavenly Greens. Email sent to <strong>costco@heavenlygreens.com</strong> with Member Info + Order Info.</div>
+    </div>
+    <div class="connector centah" style="height:1rem"></div>
+    <div class="arrow-down centah"></div>
+    <div class="connector centah" style="height:0.5rem"></div>
+    <div class="node centah">
+      <div class="node-title">Email notification delivered</div>
+      <div class="node-body">Subject: <strong>[Centah] New Artificial Turf Lead Notification (ID)</strong><br>Contains: name, address, phone, email, warehouse, distance.</div>
+    </div>
+  </div>
+  <div class="lane-col auto">
+    <div style="height:2rem"></div>
+    <div class="node auto">
+      <div class="node-title">Modal poller fires</div>
+      <div class="node-body">M365 Graph API polled every <strong>5 minutes</strong>. Reads costco@heavenlygreens.com mailbox (read + unread, last 7 days).</div>
+    </div>
+    <div class="connector auto" style="height:1rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto">
+      <div class="node-title">Email parsed + filtered</div>
+      <div class="node-body">Subject line filter: <span class="pill">lead notification</span>. Skips: notes, snapshots, other.<br>Extracts: CENTAH ID, all member fields.</div>
+    </div>
+    <div class="connector auto" style="height:1rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto">
+      <div class="node-title">Dedup check</div>
+      <div class="node-body">Email search in AGM → if duplicate, skip. SF duplicate rules checked on creation. Safe to rerun — idempotent.</div>
+    </div>
+  </div>
+  <div class="lane-col hg"></div>
+  <div class="lane-col member">
+    <div style="height:0.5rem"></div>
+    <div class="node member">
+      <div class="node-title">Member awaits contact</div>
+      <div class="node-body">No action required. Member expects to be contacted by Heavenly Greens to schedule a consultation.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 2 — SYSTEM CREATION
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 2 · System Creation</span>
+    <span class="phase-status live">Live — Pillars 1 &amp; 2</span>
+  </div>
+
+  <div class="lane-col centah"></div>
+  <div class="lane-col auto">
+    <div class="node auto">
+      <div class="node-title">AGM contact created</div>
+      <div class="node-body">Tags: <span class="pill">costco-lead</span><span class="pill">centah</span><span class="pill">centah-{id}</span><br>Source: Costco · Full address &amp; contact fields mapped.</div>
+    </div>
+    <div class="connector auto" style="height:0.75rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto">
+      <div class="node-title">Salesforce lead created</div>
+      <div class="node-body">LeadSource: <strong>Costco</strong>. Company: "Costco Referral". Description includes CENTAH ID, warehouse, service, distance.</div>
+    </div>
+  </div>
+  <div class="lane-col hg"></div>
+  <div class="lane-col member"></div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 3 — SPEED-TO-LEAD OUTREACH
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 3 · Speed-to-Lead Outreach</span>
+    <span class="phase-status notbuilt">Pillar 5 — Not Yet Built</span>
+  </div>
+
+  <div class="lane-col centah"></div>
+  <div class="lane-col auto">
+    <div class="node auto notbuilt">
+      <div class="node-title">Internal notification fires</div>
+      <div class="node-body">AGM workflow triggered by <span class="pill">costco-lead</span> tag. Sales rep alerted via SMS + email immediately.</div>
+    </div>
+    <div class="connector auto" style="height:0.75rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto notbuilt">
+      <div class="node-title">T+0 min — SMS to member</div>
+      <div class="node-body">Costco-specific intro text. Acknowledge inquiry, introduce Heavenly Greens as Costco's authorized Shaw Turf partner.</div>
+    </div>
+    <div class="connector auto" style="height:0.75rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto notbuilt">
+      <div class="node-title">T+10 min — Email to member</div>
+      <div class="node-body">HG overview, Shaw Turf project gallery, next steps. Branded HTML template.</div>
+    </div>
+  </div>
+  <div class="lane-col hg">
+    <div class="node hg notbuilt">
+      <div class="node-title">Rep calls member</div>
+      <div class="node-body">Target: <strong>&lt; 5 minutes</strong> from lead creation. Script: "Heavenly Greens, Costco's authorized Shaw Turf installation partner." Move to scheduling in 60–90 seconds.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="arrow-down hg"></div>
+    <div class="connector hg" style="height:0.5rem"></div>
+    <div class="node hg notbuilt">
+      <div class="node-title">If voicemail</div>
+      <div class="node-body">"Hi [Name], this is [Rep] with Heavenly Greens, Costco's authorized Shaw Turf partner… call/text 844-247-7215." Short. Costco first.</div>
+    </div>
+  </div>
+  <div class="lane-col member">
+    <div style="height:1rem"></div>
+    <div class="node member">
+      <div class="node-title">Member receives SMS + email</div>
+      <div class="node-body">First touchpoint from HG. May also receive a call from a rep.</div>
+    </div>
+  </div>
+
+  <!-- DECISION: Does member answer? -->
+  <div class="full-row" style="padding-top:1rem; padding-bottom:0.25rem;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:0;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-end;padding-right:1rem;">
+        <span class="branch-label no" style="margin-bottom:0.25rem;">NO — No response</span>
+        <div style="height:2px;width:80%;background:hsl(0 75% 55%/0.3);align-self:flex-end;"></div>
+      </div>
+      <div style="width:160px;flex-shrink:0;position:relative;height:90px;">
+        <div class="diamond"></div>
+        <div class="diamond-text">Member responds or answers call?</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;padding-left:1rem;">
+        <span class="branch-label yes" style="margin-bottom:0.25rem;">YES — Engaged</span>
+        <div style="height:2px;width:80%;background:hsl(100 60% 44%/0.3);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 4 — AUTOMATED FOLLOW-UP SEQUENCE
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 4 · Automated Follow-Up (No Response Path)</span>
+    <span class="phase-status notbuilt">Pillar 6 — Not Yet Built</span>
+  </div>
+
+  <div class="lane-col centah"></div>
+  <div class="lane-col auto">
+    <div class="cadence">
+      <div class="cadence-item">
+        <span class="cadence-time">T+24h</span>
+        <span class="cadence-desc">SMS nudge — "Still interested in that Costco turf estimate?"</span>
+      </div>
+      <div class="cadence-item">
+        <span class="cadence-time">T+48h</span>
+        <span class="cadence-desc">Email — testimonials, social proof, free estimate CTA</span>
+      </div>
+      <div class="cadence-item">
+        <span class="cadence-time">T+72h</span>
+        <span class="cadence-desc">Voice AI call — qualify, answer questions, attempt booking</span>
+      </div>
+      <div class="cadence-item">
+        <span class="cadence-time">T+5–7d</span>
+        <span class="cadence-desc">Final SMS — soft close, leave door open</span>
+      </div>
+    </div>
+  </div>
+  <div class="lane-col hg">
+    <div class="node hg notbuilt">
+      <div class="node-title">CENTAH: follow-up log</div>
+      <div class="node-body">All contact attempts logged in CENTAH <strong>immediately</strong>. Notes mirrored to AGM contact record.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="node hg notbuilt">
+      <div class="node-title">Day 25 — alert HG Costco staff</div>
+      <div class="node-body">If no response after 25 days, HG Costco staff notified to review.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="node hg notbuilt">
+      <div class="node-title">Day 30 — cancel in CENTAH</div>
+      <div class="node-body">Cancel lead in CENTAH with documented justification. Mark Lost in AGM &amp; SF.</div>
+    </div>
+  </div>
+  <div class="lane-col member">
+    <div class="node member" style="opacity:0.5;">
+      <div class="node-title">No response</div>
+      <div class="node-body">Member not engaging. Sequence continues until day 30.</div>
+    </div>
+    <div style="height:0.5rem"></div>
+    <div class="terminal lost" style="font-size:0.75rem;padding:0.5rem 0.75rem;">
+      ✕ Ghost — No Response
+      <p>Cancelled in CENTAH day 30.<br>Closed Lost in SF + AGM.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 5 — SCHEDULING
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 5 · Appointment Scheduling (Engaged Path)</span>
+    <span class="phase-status live">Live</span>
+  </div>
+
+  <div class="lane-col centah">
+    <div class="node centah">
+      <div class="node-title">CENTAH: quote same day</div>
+      <div class="node-body">Rep must quote the lead in CENTAH on the day of contact — even if no sale. <strong>Red flag if skipped.</strong></div>
+    </div>
+  </div>
+  <div class="lane-col auto">
+    <div class="node auto">
+      <div class="node-title">AGM booking automations</div>
+      <div class="node-body">On appointment creation:<br>
+        <span class="pill">Immediate email confirmation</span>
+        <span class="pill">5-min SMS confirmation</span>
+        <span class="pill">24h reminder</span>
+        <span class="pill">1h reminder</span>
+        <span class="pill">30-min post-appt prompt to rep</span>
+      </div>
+    </div>
+  </div>
+  <div class="lane-col hg">
+    <div class="node hg">
+      <div class="node-title">Rep books appointment in AGM</div>
+      <div class="node-body">Calendar: <strong>HG Estimate</strong>. Duration: 120 min. Buffer: 30 min each side.<br>Title: <strong>Sales Pres | Full Name | City</strong><br>Confirm address is in contact profile first.</div>
+    </div>
+  </div>
+  <div class="lane-col member">
+    <div class="node member">
+      <div class="node-title">Member confirms appointment</div>
+      <div class="node-body">Receives email + SMS confirmation. Re-anchors to Shaw Turf / Costco program in confirmation text.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 6 — APPOINTMENT RUN
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 6 · Appointment Run</span>
+    <span class="phase-status live">Live</span>
+  </div>
+
+  <div class="lane-col centah">
+    <div class="node centah">
+      <div class="node-title">Update home construction date</div>
+      <div class="node-body">Required in CENTAH: record whether home is pre or post-1978.</div>
+    </div>
+  </div>
+  <div class="lane-col auto">
+    <div class="node auto">
+      <div class="node-title">30-min post-start trigger</div>
+      <div class="node-body">AGM workflow fires 30 minutes after appointment start time. Prompts rep to complete the Appointment Ran process via email + SMS.</div>
+    </div>
+  </div>
+  <div class="lane-col hg">
+    <div class="node hg">
+      <div class="node-title">Rep runs the appointment</div>
+      <div class="node-body">Present Shaw Turf samples (Costco-approved only). Measure, review layout, qualify. Never offer non-Costco product line.<br><strong>Explain right to cancel</strong>: 3 or 5 days + waiver option.</div>
+    </div>
+  </div>
+  <div class="lane-col member">
+    <div class="node member">
+      <div class="node-title">Member reviews Shaw options</div>
+      <div class="node-body">In-home consultation. Sees samples, gets measurements reviewed, receives quote.</div>
+    </div>
+  </div>
+
+  <!-- DECISION: Sale? -->
+  <div class="full-row" style="padding-top:1rem;padding-bottom:0.25rem;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:0;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-end;padding-right:1rem;">
+        <span class="branch-label no" style="margin-bottom:0.25rem;">NO — No Sale</span>
+        <div style="height:2px;width:80%;background:hsl(0 75% 55%/0.3);align-self:flex-end;"></div>
+      </div>
+      <div style="width:160px;flex-shrink:0;position:relative;height:90px;">
+        <div class="diamond"></div>
+        <div class="diamond-text">Sale at appointment?</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:flex-start;padding-left:1rem;">
+        <span class="branch-label yes" style="margin-bottom:0.25rem;">YES — Sale</span>
+        <div style="height:2px;width:80%;background:hsl(100 60% 44%/0.3);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 7A — NO SALE FOLLOW-UP
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 7A · No-Sale Follow-Up Cadence</span>
+    <span class="phase-status live">Live (manual rep process)</span>
+  </div>
+
+  <div class="lane-col centah">
+    <div class="node centah">
+      <div class="node-title">CENTAH: quote same day</div>
+      <div class="node-body">Quote the lead in CENTAH <strong>same day</strong> as appointment — mandatory even on no-sale.</div>
+    </div>
+    <div class="connector centah" style="height:0.75rem"></div>
+    <div class="node centah">
+      <div class="node-title">Log all contact attempts</div>
+      <div class="node-body">Every outreach attempt logged in CENTAH immediately. Dated notes + initials on proposal.</div>
+    </div>
+    <div class="connector centah" style="height:0.75rem"></div>
+    <div class="node centah">
+      <div class="node-title">Day 30 — cancel lead</div>
+      <div class="node-body">Cancel in CENTAH with documented justification after 30 days no response.</div>
+    </div>
+  </div>
+  <div class="lane-col auto">
+    <div class="node auto">
+      <div class="node-title">AGM follow-up tasks created</div>
+      <div class="node-body">Task assigned to rep in AGM with follow-up timeline. Notes from CENTAH mirrored to AGM contact record.</div>
+    </div>
+  </div>
+  <div class="lane-col hg">
+    <div class="cadence" style="max-width:196px;">
+      <div class="cadence-item">
+        <span class="cadence-time">Day 8</span>
+        <span class="cadence-desc">Rep follow-up call or contact attempt</span>
+      </div>
+      <div class="cadence-item">
+        <span class="cadence-time">Day 16</span>
+        <span class="cadence-desc">Rep follow-up call or contact attempt</span>
+      </div>
+      <div class="cadence-item">
+        <span class="cadence-time">Day 25</span>
+        <span class="cadence-desc">Final attempt. Notify HG Costco staff if still no response.</span>
+      </div>
+      <div class="cadence-item">
+        <span class="cadence-time">Day 30</span>
+        <span class="cadence-desc">Cancel in CENTAH. Mark Lost in AGM &amp; SF.</span>
+      </div>
+    </div>
+    <div style="height:0.5rem"></div>
+    <div class="terminal lost" style="font-size:0.75rem;padding:0.5rem 0.75rem;">
+      ✕ No Sale — Closed Lost
+      <p>CENTAH cancelled · SF Closed Lost<br>AGM pipeline updated</p>
+    </div>
+  </div>
+  <div class="lane-col member">
+    <div class="node member">
+      <div class="node-title">Member considering</div>
+      <div class="node-body">Receives follow-up outreach at 8, 16, and 25-day marks.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 7B — SALE: CONTRACT
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 7B · Sale — Contract &amp; Payment</span>
+    <span class="phase-status live">Live</span>
+  </div>
+
+  <div class="lane-col centah">
+    <div class="node centah">
+      <div class="node-title">Quote + sell in CENTAH</div>
+      <div class="node-body">Rep quotes AND sells in CENTAH. Set installation date <strong>~90 days out</strong>. Same-day requirement.</div>
+    </div>
+  </div>
+  <div class="lane-col auto">
+    <div class="node auto">
+      <div class="node-title">Costco Contract Form submitted</div>
+      <div class="node-body">Rep submits form in AGM (via Contact, Conversation, or Appt Ran prompt). Data saves to contact profile.</div>
+    </div>
+    <div class="connector auto" style="height:0.75rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto">
+      <div class="node-title">Specs + warranties sent instantly</div>
+      <div class="node-body">On form submit: Costco specs and product warranties sent to member via email + SMS. Member initials receipt only.</div>
+    </div>
+    <div class="connector auto" style="height:0.75rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto">
+      <div class="node-title">Draft contract generated</div>
+      <div class="node-body">"Costco Job Contract - Template" → rename to <strong>"Costco Job Contract - Job Name"</strong>. Rep reviews all fields + Work Order (p.12).</div>
+    </div>
+  </div>
+  <div class="lane-col hg">
+    <div class="node hg">
+      <div class="node-title">Rep reviews &amp; sends contract</div>
+      <div class="node-body">Confirm: 2 recipients only (member + rep). Signing order ON — member signs first. Check p.4 (Costco card) and p.6 (Over-65) checkboxes.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="node hg">
+      <div class="node-title">Rep signs after member</div>
+      <div class="node-body">HG rep signs as Heavenly Greens representative. Confirm completed doc received with all fields filled.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="node hg">
+      <div class="node-title">Payment collected</div>
+      <div class="node-body">Via member portal OR call Eric/Tim.<br><strong>Check rules:</strong> Payable to <strong>Costco</strong>. Member = account holder. No defaced checks. ACH authorization form required.</div>
+    </div>
+  </div>
+  <div class="lane-col member">
+    <div class="node member">
+      <div class="node-title">Member initials specs receipt</div>
+      <div class="node-body">Checks email or phone. Initials that they received Costco specs + warranties. Then reviews full contract.</div>
+    </div>
+    <div class="connector member" style="height:0.75rem"></div>
+    <div class="node member">
+      <div class="node-title">Member signs contract</div>
+      <div class="node-body">Electronic signature via email link or in-person link on device. Signs before rep.</div>
+    </div>
+    <div class="connector member" style="height:0.75rem"></div>
+    <div class="node member">
+      <div class="node-title">Member provides payment</div>
+      <div class="node-body">ACH check (payable to Costco) or portal payment. ACH authorization form signed.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       PHASE 8 — INSTALLATION
+  ══════════════════════════════════════════════════ -->
+  <div class="phase-row">
+    <span class="phase-label">Phase 8 · Installation</span>
+    <span class="phase-status live">Live (automated pipeline triggers)</span>
+  </div>
+
+  <div class="lane-col centah">
+    <div class="node centah">
+      <div class="node-title">Submit Costco contract</div>
+      <div class="node-body">Costco contract submitted to Costco <strong>within 1 day</strong> of job completion.</div>
+    </div>
+    <div class="connector centah" style="height:0.75rem"></div>
+    <div class="node centah">
+      <div class="node-title">Certificates into CENTAH</div>
+      <div class="node-body">Start of Work + Completion certificates into CENTAH system <strong>within 1 day</strong> of completion. Hard SLA.</div>
+    </div>
+  </div>
+  <div class="lane-col auto">
+    <div class="node auto">
+      <div class="node-title">Job Authorization sent</div>
+      <div class="node-body">Triggered automatically when job is scheduled in the <strong>Installation Pipeline</strong> in AGM. No manual send required.</div>
+    </div>
+    <div class="connector auto" style="height:0.75rem"></div>
+    <div class="arrow-down auto"></div>
+    <div class="connector auto" style="height:0.5rem"></div>
+    <div class="node auto">
+      <div class="node-title">Job Completed cert sent</div>
+      <div class="node-body">Triggered automatically when installation marked <strong>"Total Installed"</strong> in the Lead Flow Pipeline in AGM.</div>
+    </div>
+  </div>
+  <div class="lane-col hg">
+    <div class="node hg">
+      <div class="node-title">Crew schedules job</div>
+      <div class="node-body">Job added to Installation Pipeline in AGM. Triggers Job Authorization automatically.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="node hg">
+      <div class="node-title">Installation completed</div>
+      <div class="node-body">Crew completes turf install.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="node hg">
+      <div class="node-title">Mark "Total Installed" in AGM</div>
+      <div class="node-body">Crew or PM marks job as Total Installed in Lead Flow Pipeline. Triggers completion certificate.</div>
+    </div>
+    <div class="connector hg" style="height:0.75rem"></div>
+    <div class="node hg">
+      <div class="node-title">Submit contract + certs to Costco</div>
+      <div class="node-body">Costco contract + both certificates submitted within <strong>1 day</strong>. Costco rejects non-compliant submissions.</div>
+    </div>
+  </div>
+  <div class="lane-col member">
+    <div class="node member">
+      <div class="node-title">Member receives Job Authorization</div>
+      <div class="node-body">Automated. Confirms work is about to begin.</div>
+    </div>
+    <div class="connector member" style="height:0.75rem"></div>
+    <div class="node member">
+      <div class="node-title">Installation day</div>
+      <div class="node-body">Crew arrives. Turf installed.</div>
+    </div>
+    <div class="connector member" style="height:0.75rem"></div>
+    <div class="node member">
+      <div class="node-title">Member receives completion cert</div>
+      <div class="node-body">Automated. Confirms job is complete. Final record.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       OUTCOME
+  ══════════════════════════════════════════════════ -->
+  <div class="divider"></div>
+  <div class="outcome-row">
+    <div class="outcome-col">
+      <div class="terminal won" style="width:100%;max-width:320px;">
+        ✓ Project Won
+        <p>Contract signed · Payment collected · Job installed<br>Completion cert in CENTAH · SF Opportunity Closed Won<br>AGM pipeline updated</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="print-note">HG Costco Workflow — Master Flow · Phase 1 reference document · Generated March 2026</div>
+
+</div><!-- .swim-grid -->
+</div><!-- .swim-wrap -->
+
+</body>
+</html>
