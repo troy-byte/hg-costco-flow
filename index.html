@@ -534,6 +534,7 @@
   <nav class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('flow',this)">Phase 1 · Master Flow</button>
     <button class="tab-btn" onclick="switchTab('p2',this)">Phase 2 · Binder Outputs</button>
+    <button class="tab-btn" onclick="switchTab('pipeline',this)">Phase 3 · CRM Pipeline</button>
   </nav>
 </div>
 
@@ -1282,6 +1283,162 @@
 
 </div><!-- .p2-wrap -->
 </div><!-- #tab-p2 -->
+
+<!-- ══════════════════════════════════════════════════
+     TAB PANEL 3 — PHASE 3 CRM PIPELINE
+══════════════════════════════════════════════════ -->
+<div id="tab-pipeline" class="tab-panel">
+<div class="p2-wrap">
+
+  <div class="p2-intro">
+    <h2>Phase 3 · CRM Pipeline <span class="out-status">Design</span></h2>
+    <p>The 10-stage AGM lead flow for HG Costco. Each stage maps to a CRM status, Salesforce sync behavior, and — where applicable — an automated document signing workflow. This is the source of truth for how a Costco lead moves from first contact to paid in full.</p>
+  </div>
+
+  <!-- ── PIPELINE STAGES ── -->
+  <div style="margin-bottom: 2rem;">
+    <div class="out-tag" style="margin-bottom: 1rem;">AGM Pipeline Stages · Salesforce Sync</div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.625rem;">
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--auto); background:var(--auto-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">1</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Lead</div>
+          <div style="font-size:0.8125rem; color:var(--muted);">New contact record created in Salesforce.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--auto); background:var(--auto-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">2</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Appointment Booked</div>
+          <div style="font-size:0.8125rem; color:var(--muted);">Status updated in Salesforce for appointment booked.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--auto); background:var(--auto-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">3</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Appointment Ran</div>
+          <div style="font-size:0.8125rem; color:var(--muted);">Status updated in Salesforce for appointment ran (if applicable).</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--hg); background:var(--hg-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">4</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Proposal / Contract Out <span style="font-size:0.6875rem; font-weight:600; color:var(--centah); background:var(--centah-bg); border-radius:999px; padding:0.1rem 0.45rem; margin-left:0.4rem;">Costco Only</span></div>
+          <div style="font-size:0.8125rem; color:var(--muted);">Status updated in Salesforce. <strong style="color:var(--fg);">Document A (Sales Contract)</strong> sent to member — Document Signature Alert monitoring begins.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--hg); background:var(--hg-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">5</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Proposal / Contract Approved <span style="font-size:0.6875rem; font-weight:600; color:var(--centah); background:var(--centah-bg); border-radius:999px; padding:0.1rem 0.45rem; margin-left:0.4rem;">Costco Only</span></div>
+          <div style="font-size:0.8125rem; color:var(--muted);">Status updated in Salesforce. Document A signed — alert monitoring stops.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--hg); background:var(--hg-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">6</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Deposit Invoice Sent <span style="font-size:0.6875rem; font-weight:600; color:var(--centah); background:var(--centah-bg); border-radius:999px; padding:0.1rem 0.45rem; margin-left:0.4rem;">Costco Only</span></div>
+          <div style="font-size:0.8125rem; color:var(--muted);">Status updated in Salesforce.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--hg); background:var(--hg-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">7</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Deposit Received <span style="font-size:0.6875rem; font-weight:600; color:var(--centah); background:var(--centah-bg); border-radius:999px; padding:0.1rem 0.45rem; margin-left:0.4rem;">Costco Only</span></div>
+          <div style="font-size:0.8125rem; color:var(--muted);">Status updated in Salesforce.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--member); background:var(--member-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">8</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Installation Started</div>
+          <div style="font-size:0.8125rem; color:var(--muted);">No Salesforce change. <strong style="color:var(--fg);">Document B (Start of Work Contract)</strong> sent — Document Signature Alert monitoring begins.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--member); background:var(--member-bg); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">9</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Total Installed</div>
+          <div style="font-size:0.8125rem; color:var(--muted);">No Salesforce change. <strong style="color:var(--fg);">Document C (Completion of Work Contract)</strong> sent — Document Signature Alert monitoring begins.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; display:flex; gap:1rem; align-items:flex-start;">
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:var(--won); background: hsl(100 60% 44% / 0.1); border-radius:4px; padding:0.15rem 0.5rem; flex-shrink:0; margin-top:0.1rem;">10</span>
+        <div>
+          <div style="font-weight:600; color:var(--fg); margin-bottom:0.2rem;">Total Collected · Paid in Full</div>
+          <div style="font-size:0.8125rem; color:var(--muted);">No Salesforce change. Project complete.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── DOCUMENT SIGNATURE ALERT ── -->
+  <div class="out-card" style="margin-bottom: 2rem;">
+    <div class="out-card-hd">
+      <div class="out-tag">Document Signature Alert · AGM Pro Tools Automation</div>
+      <h3>Unsigned Document Follow-Up</h3>
+      <p>When any of the three documents goes unsigned, an automated reminder sequence fires to the contact. If still unsigned after the full sequence, the assigned sales rep is escalated via SMS + email. Each document runs its own independent loop.</p>
+    </div>
+    <div class="out-card-body">
+      <ul class="sec-list">
+        <li class="sec-item">
+          <span class="sec-num">A</span>
+          <div>
+            <div class="sec-title">Sales Contract — Stage 4</div>
+            <div class="sec-desc">Sent at Proposal/Contract Out. Signed = moves to Proposal/Contract Approved.</div>
+          </div>
+        </li>
+        <li class="sec-item">
+          <span class="sec-num">B</span>
+          <div>
+            <div class="sec-title">Start of Work Contract — Stage 8</div>
+            <div class="sec-desc">Sent at Installation Started.</div>
+          </div>
+        </li>
+        <li class="sec-item">
+          <span class="sec-num">C</span>
+          <div>
+            <div class="sec-title">Completion of Work Contract — Stage 9</div>
+            <div class="sec-desc">Sent at Total Installed.</div>
+          </div>
+        </li>
+        <li class="sec-item">
+          <span class="sec-num">→</span>
+          <div>
+            <div class="sec-title">Reminder Cadence (same for all three)</div>
+            <div class="sec-desc">T+15 min → Reminder 1 (SMS + email to contact) · T+45 min → Reminder 2 · T+1h 45m → Reminder 3 · T+7h 45m → Escalate to assigned sales rep (SMS + email)</div>
+          </div>
+        </li>
+        <li class="sec-item">
+          <span class="sec-num">✉</span>
+          <div>
+            <div class="sec-title">Message Copy</div>
+            <div class="sec-desc">"Please review and sign your document for your installation: [link]" — same copy for all reminders and all three documents.</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── OPEN QUESTIONS ── -->
+  <div class="p2-note">
+    <strong>Open questions for Tim (Salesforce):</strong> (1) Is the "Customer Document" the Quote object or a different object? (2) What does "contract approved" look like in SF — status field or approval process? (3) When a job is scheduled — field on Quote or separate Job/Work Order object? (4) What field/status change is the return signal from SF back to AGM (e.g. Total Installed → triggers what)?
+  </div>
+
+</div><!-- .p2-wrap -->
+</div><!-- #tab-pipeline -->
 
 <script>
   function switchTab(id, btn) {
