@@ -1292,7 +1292,7 @@
 
   <div class="p2-intro">
     <h2>Phase 3 · CRM Pipeline <span class="out-status">Design</span></h2>
-    <p>The 10-stage AGM lead flow for HG Costco. Each stage maps to a CRM status, Salesforce sync behavior, and — where applicable — an automated document signing workflow. This is the source of truth for how a Costco lead moves from first contact to paid in full.</p>
+    <p>The 10-stage AGM lead flow pipeline. Each stage maps to a CRM status, Salesforce sync behavior, and — where applicable — an automated document signing workflow. Applies to all HG contacts; stages marked <strong style="color:var(--centah);">Costco Only</strong> are specific to the Costco program.</p>
   </div>
 
   <!-- ── PIPELINE STAGES ── -->
@@ -1426,6 +1426,20 @@
           <div>
             <div class="sec-title">Message Copy</div>
             <div class="sec-desc">"Please review and sign your document for your installation: [link]" — same copy for all reminders and all three documents.</div>
+          </div>
+        </li>
+        <li class="sec-item">
+          <span class="sec-num">⬡</span>
+          <div>
+            <div class="sec-title">State Tracking — Google Sheet "Document Watchdog"</div>
+            <div class="sec-desc">One row per document per job. Columns: Contact ID · Document Type (A/B/C) · Document ID · Sent At · Reminder 1–3 Sent At · Escalated At · Status (watching / reminded / escalated / signed) · Assigned Rep (name + email + phone).</div>
+          </div>
+        </li>
+        <li class="sec-item">
+          <span class="sec-num">⚙</span>
+          <div>
+            <div class="sec-title">Implementation Status</div>
+            <div class="sec-desc">Designed. Directive (<code style="font-size:0.75rem; background:var(--bg2); padding:0.1rem 0.35rem; border-radius:3px;">directives/document_signature_alert.md</code>) and execution script not yet written. Cron: every 5 minutes.</div>
           </div>
         </li>
       </ul>
